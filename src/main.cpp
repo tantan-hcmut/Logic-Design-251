@@ -85,10 +85,7 @@ void loop()
   // Nếu đã có cấu hình WiFi => thử reconnect ở chế độ STA
   if (check_info_File(true))
   {
-    if (!Wifi_reconnect())
-    {
-      Webserver_stop();
-    }
+    Wifi_reconnect(); 
   }
 
   // Đảm bảo WebServer (AP/WebSocket) luôn chạy
