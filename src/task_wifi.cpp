@@ -12,35 +12,35 @@ void startSTA()
 {
     if (WIFI_SSID.isEmpty())
     {
-        vTaskDelete(NULL);
+        // Không có SSID thì khỏi kết nối STA
+        return;
     }
 
     WiFi.mode(WIFI_STA);
 
-    if (WIFI_PASS.isEmpty())
-    {
-        WiFi.begin(WIFI_SSID.c_str());
-    }
-    else
-    {
-        WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
-    }
+    if (WIFI_PASS.isEmpty()) WiFi.begin(WIFI_SSID.c_str());
+    else                     WiFi.begin(WIFI_SSID.c_str(), WIFI_PASS.c_str());
 
+    uint32_t t0 = millis();
     while (WiFi.status() != WL_CONNECTED)
     {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+        vTaskDelay(pdMS_TO_TICKS(100));
+        if (millis() - t0 > 15000) {   // timeout 15s để không treo vĩnh viễn
+            Serial.println("❌ STA connect timeout");
+            return;
+        }
     }
-    //Give a semaphore here
+
+    Serial.print("✅ STA IP: ");
+    Serial.println(WiFi.localIP());
+
     xSemaphoreGive(xBinarySemaphoreInternet);
 }
 
 bool Wifi_reconnect()
 {
-    const wl_status_t status = WiFi.status();
-    if (status == WL_CONNECTED)
-    {
-        return true;
-    }
+    if (WiFi.status() == WL_CONNECTED) return true;
+
     startSTA();
-    return false;
+    return (WiFi.status() == WL_CONNECTED);
 }
